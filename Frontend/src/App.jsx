@@ -141,7 +141,7 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/report")
+    fetch("https://lc-stat-backend.onrender.com/api/report")
       .then(res => res.json())
       .then(data => {
         setReport(data.data);

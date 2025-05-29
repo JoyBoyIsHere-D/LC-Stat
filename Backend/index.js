@@ -14,7 +14,8 @@ const usernames = [
   "Markio125",
   "garuda_001", 
   "JoyBoyIsHere", 
-  "harshdalmia20212081"
+  // "harshdalmia20212081", 
+  "pra_bhat_"
 ];
 
 const LEETCODE_GRAPHQL_URL = 'https://leetcode.com/graphql';
