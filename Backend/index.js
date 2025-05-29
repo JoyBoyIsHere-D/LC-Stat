@@ -50,7 +50,7 @@ async function fetchTodayAcSubmissions(username) {
     .filter(sub => Number(sub.timestamp) >= todayStart)
     .map(sub => ({
       title: sub.title,
-      time: DateTime.fromSeconds(Number(sub.timestamp), { zone: 'utc' }).toFormat('HH:mm:ss'),
+      time: DateTime.fromSeconds(Number(sub.timestamp)).setZone('Asia/Kolkata').toFormat('HH:mm:ss'),
     }));
 }
 
