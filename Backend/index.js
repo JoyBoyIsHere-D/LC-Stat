@@ -14,7 +14,6 @@ const usernames = [
   "Markio125",
   "garuda_001", 
   "JoyBoyIsHere", 
-  // "harshdalmia20212081", 
   "pra_bhat_"
 ];
 
