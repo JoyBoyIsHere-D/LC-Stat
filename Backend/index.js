@@ -53,6 +53,8 @@ async function fetchTodayAcSubmissions(username) {
     .map(sub => ({
       title: sub.title,
       time: DateTime.fromSeconds(Number(sub.timestamp), { zone: 'Asia/Kolkata' }).toFormat('HH:mm:ss'),
+      submissionId: sub.id,
+      titleSlug: sub.titleSlug
     }));
 }
 

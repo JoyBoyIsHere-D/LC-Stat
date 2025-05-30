@@ -18,16 +18,40 @@ const StatsCard = ({ label, value, color = "blue" }) => {
 };
 
 // Submission Item Component
-const SubmissionItem = ({ submission }) => {
+const SubmissionItem = ({ submission, username }) => {
+  const handleViewSubmission = () => {
+    const submissionUrl = `https://leetcode.com/submissions/detail/${submission.submissionId}`;
+    window.open(submissionUrl, '_blank');
+  };
+
+  const handleViewQuestion = () => {
+    const questionUrl = `https://leetcode.com/problems/${submission.titleSlug}`;
+    window.open(questionUrl, '_blank');
+  };
+
   return (
     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
       <div className="flex items-center space-x-3">
         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
         <span className="font-medium text-gray-900">{submission.title}</span>
       </div>
-      <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded-md">
-        {submission.time}
-      </span>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm text-gray-500 bg-white px-2 py-1 rounded-md">
+          {submission.time}
+        </span>
+        <button
+          onClick={handleViewSubmission}
+          className="px-2 py-1 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-blue-100 transition-colors cursor-pointer"
+        >
+          Stalk Harder
+        </button>
+        <button
+          onClick={handleViewQuestion}
+          className="px-2 py-1 text-sm font-medium text-lime-600 bg-lime-50 rounded-md hover:bg-purple-100 transition-colors cursor-pointer"
+        >
+          Solve This
+        </button>
+      </div>
     </div>
   );
 };
@@ -116,7 +140,11 @@ const UserCard = ({ user }) => {
         ) : (
           <div className="space-y-3">
             {user.todaySubs.map((sub, i) => (
-              <SubmissionItem key={i} submission={sub} />
+              <SubmissionItem 
+                key={i} 
+                submission={sub} 
+                username={user.username} 
+              />
             ))}
           </div>
         )}
