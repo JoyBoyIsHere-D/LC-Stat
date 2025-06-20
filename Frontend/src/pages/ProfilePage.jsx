@@ -1,73 +1,28 @@
 import { useState, useEffect } from 'react'
-import { auth } from '../config/firebase'
-import { getUserByUid, createOrUpdateUser } from '../config/userService'
+import { createOrUpdateUser } from '../config/userService'
 import FriendsManager from '../components/FriendsManager'
 import { Navigate } from 'react-router-dom'
+import { useAppState } from '../contexts/AppStateContext'
 
 const ProfilePage = () => {
-  const [user, setUser] = useState(null)
+  const { authLoading, authUser, userData } = useAppState()
   const [formData, setFormData] = useState({
     username: '',
     leetcodeUsername: '',
   })
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
+  // Update form data when userData changes
   useEffect(() => {
-    const loadUserData = async () => {
-      if (auth.currentUser) {
-        try {
-          const userData = await getUserByUid(auth.currentUser.uid)
-          setUser(userData)
-
-          if (userData) {
-            setFormData({
-              username: userData.username || '',
-              leetcodeUsername: userData.leetcodeUsername || '',
-            })
-          }
-        } catch (err) {
-          console.error('Error loading user data:', err)
-          setError('Failed to load user data')
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        setLoading(false)
-      }
+    if (userData) {
+      setFormData({
+        username: userData.username || '',
+        leetcodeUsername: userData.leetcodeUsername || '',
+      })
     }
-
-    loadUserData()
-
-    // Listen for auth state changes
-    const unsubscribe = auth.onAuthStateChanged(async currentUser => {
-      if (currentUser) {
-        try {
-          const userData = await getUserByUid(currentUser.uid)
-          setUser(userData)
-
-          if (userData) {
-            setFormData({
-              username: userData.username || '',
-              leetcodeUsername: userData.leetcodeUsername || '',
-            })
-          }
-        } catch (err) {
-          console.error('Error loading user data:', err)
-          setError('Failed to load user data')
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        setUser(null)
-        setLoading(false)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [])
+  }, [userData])
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -82,7 +37,7 @@ const ProfilePage = () => {
     setError('')
     setSuccess('')
 
-    if (!auth.currentUser) {
+    if (!authUser) {
       setError('You must be logged in to update your profile')
       return
     }
@@ -91,7 +46,7 @@ const ProfilePage = () => {
       setSaving(true)
 
       // Update user data in Firestore
-      await createOrUpdateUser(auth.currentUser.uid, {
+      await createOrUpdateUser(authUser.uid, {
         username: formData.username,
         leetcodeUsername: formData.leetcodeUsername,
       })
@@ -105,12 +60,8 @@ const ProfilePage = () => {
     }
   }
 
-  // Redirect to login if not authenticated
-  if (!loading && !auth.currentUser) {
-    return <Navigate to="/login" />
-  }
-
-  if (loading) {
+  // Show loading while checking auth state
+  if (authLoading) {
     return (
       <div className="min-h-screen p-6 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
         <div className="max-w-3xl mx-auto">
@@ -126,6 +77,11 @@ const ProfilePage = () => {
         </div>
       </div>
     )
+  }
+
+  // Redirect to login if not authenticated (only after auth state is determined)
+  if (!authUser) {
+    return <Navigate to="/login" />
   }
 
   return (
@@ -196,7 +152,7 @@ const ProfilePage = () => {
                 <input
                   type="email"
                   disabled
-                  value={user?.email || ''}
+                  value={authUser?.email || ''}
                   className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 cursor-not-allowed"
                 />
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -207,9 +163,8 @@ const ProfilePage = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className={`w-full py-3 px-4 rounded-md font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all ${
-                  saving ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
+                className={`w-full py-3 px-4 rounded-md font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all ${saving ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>

@@ -2,16 +2,26 @@ import { useEffect, useState } from 'react'
 import DarkModeToggle from '../components/DarkModeToggle'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
-import { auth } from '../config/firebase'
-import { getUserByUid, fetchFriendsStats } from '../config/userService'
+import { useAppState, useDashboardData } from '../contexts/AppStateContext'
 
 function HomePage() {
-	const [report, setReport] = useState([])
-	const [loading, setLoading] = useState(true)
+	const { authUser, userData } = useAppState()
+	const {
+		dashboardData,
+		dashboardLoading,
+		dashboardError,
+		fetchDashboardData,
+		refreshDashboardData,
+		isCacheValid
+	} = useDashboardData()
+
 	const [darkMode, setDarkMode] = useState(false)
-	const [user, setUser] = useState(null)
-	const [error, setError] = useState(null)
 	const [reportSource, setReportSource] = useState('default')
+
+	// Extract report data from dashboard data
+	const report = dashboardData?.data || []
+	const loading = dashboardLoading
+	const error = dashboardError
 
 	// Initialize dark mode on mount
 	useEffect(() => {
@@ -44,68 +54,31 @@ function HomePage() {
 		setDarkMode(prev => !prev)
 	}
 
-	// Listen for auth state changes
+	// Fetch dashboard data when user is available
 	useEffect(() => {
-		const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-			if (currentUser) {
-				try {
-					const userData = await getUserByUid(currentUser.uid)
-					setUser(userData)
-				} catch (err) {
-					console.error('Error fetching user data:', err)
+		if (userData?.id) {
+			fetchDashboardData().then(data => {
+				if (data) {
+					setReportSource(data.source || 'user-friends')
 				}
-			} else {
-				setUser(null)
-			}
-		})
-
-		return () => unsubscribe()
-	}, [])
-
-	// Fetch report data based on user
-	useEffect(() => {
-		setLoading(true)
-		setError(null)
-
-		const fetchData = async () => {
-			try {
-				if (user && user.id) {
-					// User is logged in, fetch their friends' data
-					const data = await fetchFriendsStats(user.id);
-
-					// Make sure we have data in the expected format
-					if (data && data.data) {
-						setReport(data.data);
-						setReportSource(data.source || 'user-friends');
-					} else {
-						console.error('Unexpected data format from API:', data);
-						throw new Error('Unexpected response format from server');
-					}
-				
-				}
-			} catch (err) {
-				console.error(err)
-				setError('Failed to load report. Please try again later.')
-			} finally {
-				setLoading(false)
-			}
+			}).catch(err => {
+				console.error('Failed to fetch dashboard data:', err)
+			})
 		}
-
-		fetchData()
-	}, [user])
+	}, [userData?.id]) // Only depend on user ID, not the entire user object
 
 	// Debug function to check user data directly
 	const debugUserData = async () => {
-		if (!user || !user.id) {
+		if (!userData || !userData.id) {
 			console.error('No user logged in');
 			return;
 		}
 
 		try {
 			const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-			console.log(`Fetching debug data from: ${backendUrl}/api/debug-user?uid=${user.id}`);
+			console.log(`Fetching debug data from: ${backendUrl}/api/debug-user?uid=${userData.id}`);
 
-			const response = await fetch(`${backendUrl}/api/debug-user?uid=${user.id}`);
+			const response = await fetch(`${backendUrl}/api/debug-user?uid=${userData.id}`);
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -124,26 +97,31 @@ function HomePage() {
 	}
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex justify-center transition-colors duration-200">
-			<DarkModeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+		<div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 transition-colors duration-200">
+			{/* <DarkModeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} /> */}
 
-			<div className="mx-7 px-4 py-8">
+			<div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 				{/* Header */}
-				<div className="text-center mb-8">
-					<h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+				<div className="text-center mb-6 sm:mb-8">
+					<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
 						LeetCode Daily Report
 					</h1>
-					<p className="text-gray-600 dark:text-gray-300 text-lg">
-						{user
-							? `Welcome ${user.username || user.email}`
+					<p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300">
+						{userData
+							? `Welcome ${userData.username || authUser?.email}`
 							: "LeetCode Paglu log"}
-					</p>
-					{reportSource === 'user-friends' && report.length > 0 && (
-						<p className="text-blue-600 dark:text-blue-400 text-sm mt-2">
-							Showing stats for your friends
-						</p>
-					)}						{reportSource === 'user-friends' && report.length === 0 && (
-						<p className="text-amber-600 dark:text-amber-400 text-sm mt-2">
+					</p>					{reportSource === 'user-friends' && report.length > 0 && (
+						<div className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm mt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+							<span>Showing stats for your friends</span>
+							{isCacheValid && (
+								<span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">
+									Cached
+								</span>
+							)}
+						</div>
+					)}
+					{reportSource === 'user-friends' && report.length === 0 && (
+						<p className="text-amber-600 dark:text-amber-400 text-xs sm:text-sm mt-2">
 							You don't have any friends added yet
 							<button
 								onClick={debugUserData}
@@ -154,46 +132,59 @@ function HomePage() {
 							</button>
 						</p>
 					)}
-					<div className="w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mt-4"></div>
+
+					{/* Refresh Button */}
+					{userData && (
+						<div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
+							<button
+								onClick={() => refreshDashboardData()}
+								disabled={loading}
+								className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+							>
+								{loading ? 'Refreshing...' : 'Refresh Data'}
+							</button>
+						</div>
+					)}
+					<div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full mx-auto mt-4"></div>
 				</div>
 
 				{/* Content */}
 				{loading ? (
 					<Loading />
 				) : error ? (
-					<div className="text-center py-12">
-						<div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-							<span className="text-gray-400 dark:text-gray-500 text-3xl">❌</span>
+					<div className="text-center py-8 sm:py-12">
+						<div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+							<span className="text-gray-400 dark:text-gray-500 text-2xl sm:text-3xl">❌</span>
 						</div>
-						<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+						<h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
 							Error Loading Data
 						</h3>
-						<p className="text-gray-500 dark:text-gray-400">
+						<p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 px-4">
 							{error}
 						</p>
 					</div>
 				) : report.length === 0 ? (
-					<div className="text-center py-12">
-						<div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-							<span className="text-gray-400 dark:text-gray-500 text-3xl">📊</span>
+					<div className="text-center py-8 sm:py-12">
+						<div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+							<span className="text-gray-400 dark:text-gray-500 text-2xl sm:text-3xl">📊</span>
 						</div>
-						<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-							{user ? "No Friends Added" : "No Data Available"}
+						<h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+							{userData ? "No Friends Added" : "No Data Available"}
 						</h3>
-						<p className="text-gray-500 dark:text-gray-400">
-							{user ? "You haven't added any friends yet. Add some friends to see their LeetCode stats." : "Unable to fetch report data. Please try again later."}
+						<p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 px-4">
+							{userData ? "You haven't added any friends yet. Add some friends to see their LeetCode stats." : "Unable to fetch report data. Please try again later."}
 						</p>
-						{user && (
+						{userData && (
 							<button
 								onClick={() => window.location.href = '/profile'}
-								className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+								className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm sm:text-base"
 							>
 								Add Friends
 							</button>
 						)}
 					</div>
 				) : (
-					<div className="space-y-6 grid md:grid-cols-2 grid-cols-1 gap-x-8 gap-y-3">
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
 						{report.map(user => (
 							<UserCard key={user.username} user={user} />
 						))}
@@ -201,12 +192,12 @@ function HomePage() {
 				)}
 
 				{/* Footer */}
-				<div className="text-center mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-					<p className="text-gray-500 dark:text-gray-400 text-sm">
+				<div className="text-center mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
+					<p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
 						Last updated: {new Date().toLocaleString()}
 					</p>
-					{!user && (
-						<p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+					{!authUser && (
+						<p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-2 px-4">
 							<a href="/login" className="text-blue-500 hover:underline">Sign in</a> to see stats for yourself and your friends!
 						</p>
 					)}

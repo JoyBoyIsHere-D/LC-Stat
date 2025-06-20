@@ -11,9 +11,9 @@ const StatsCard = ({ label, value, color = 'blue' }) => {
   }
 
   return (
-    <div className={`px-4 py-3 rounded-lg border ${colorClasses[color]}`}>
-      <div className="text-sm font-medium opacity-75">{label}</div>
-      <div className="text-2xl font-bold">{value}</div>
+    <div className={`px-2 sm:px-4 py-2 sm:py-3 rounded-lg border ${colorClasses[color]}`}>
+      <div className="text-xs sm:text-sm font-medium opacity-75">{label}</div>
+      <div className="text-lg sm:text-2xl font-bold">{value}</div>
     </div>
   )
 }
