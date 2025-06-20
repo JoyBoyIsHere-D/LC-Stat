@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { auth, googleProvider } from '../config/firebase' // Import Firebase auth and googleProvider
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
+import { auth, googleProvider } from '../config/firebase'
+import {
+	createUserWithEmailAndPassword,
+	signInWithPopup,
+	updateProfile,
+	fetchSignInMethodsForEmail,
+	signInWithEmailAndPassword
+} from 'firebase/auth'
+import { createOrUpdateUser, getUserByUid } from '../config/userService'
 
 const SignupPage = () => {
 	const [formData, setFormData] = useState({
@@ -24,7 +31,7 @@ const SignupPage = () => {
 		}))
 	}
 
-	const handleSubmit = async (e) => {
+	const handleSubmit = async e => {
 		e.preventDefault()
 		setLoading(true)
 		setError('')
@@ -37,12 +44,46 @@ const SignupPage = () => {
 		}
 
 		try {
-			console.log('Signing up with:', formData)
-			await createUserWithEmailAndPassword(auth, formData.email, formData.password)
+			// Check if email is already in use
+			const methods = await fetchSignInMethodsForEmail(auth, formData.email)
+
+			if (methods.length > 0) {
+				// Email exists
+				setError('An account with this email already exists. Please sign in instead.')
+				setLoading(false)
+				return
+			}
+
+			// Create the user in Firebase Auth
+			const userCredential = await createUserWithEmailAndPassword(
+				auth,
+				formData.email,
+				formData.password
+			)
+			const user = userCredential.user
+
+			// Update the user profile with display name
+			await updateProfile(user, {
+				displayName: formData.name,
+			})
+
+			// Save user data to Firestore
+			await createOrUpdateUser(user.uid, {
+				username: formData.name,
+				email: formData.email,
+				leetcodeUsername: formData.leetcodeUsername,
+				friends: [], // For a new account, this will create an empty friends array
+			})
+
 			navigate('/')
 		} catch (err) {
-			setError('Failed to create account. Please try again.')
-			console.error(err)
+			// Handle specific error codes
+			if (err.code === 'auth/email-already-in-use') {
+				setError('An account with this email already exists. Please sign in instead.')
+			} else {
+				setError('Failed to create account. Please try again.')
+				console.error(err)
+			}
 		} finally {
 			setLoading(false)
 		}
@@ -53,8 +94,37 @@ const SignupPage = () => {
 		setLoading(true)
 		setError('')
 
+		// Validate that a LeetCode username was provided
+		if (!formData.leetcodeUsername) {
+			setError('Please enter your LeetCode username before signing up with Google')
+			setLoading(false)
+			return
+		}
+
 		try {
-			await signInWithPopup(auth, googleProvider)
+			// First, try to sign in with Google to see if the user exists
+			const result = await signInWithPopup(auth, googleProvider)
+			const user = result.user
+
+			// Check if the user already has a profile in Firestore
+			const existingUserData = await getUserByUid(user.uid)
+
+			if (existingUserData) {
+				// User already exists, preserve their existing data and redirect to home
+				console.log('User already exists, signing in:', existingUserData)
+				navigate('/')
+				return
+			}
+
+			// This is a new user, save their data to Firestore
+			console.log('New user, creating profile')
+			await createOrUpdateUser(user.uid, {
+				username: user.displayName || 'User',
+				email: user.email,
+				leetcodeUsername: formData.leetcodeUsername,
+				friends: [], // For a new account, this will create an empty friends array
+			})
+
 			navigate('/')
 		} catch (err) {
 			setError('Google sign-in failed. Please try again.')
@@ -218,7 +288,9 @@ const SignupPage = () => {
 							<div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
 						</div>
 						<div className="relative flex justify-center text-sm">
-							<span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">Or continue with</span>
+							<span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+								Or continue with
+							</span>
 						</div>
 					</div>
 

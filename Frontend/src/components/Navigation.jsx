@@ -42,14 +42,26 @@ const Navigation = () => {
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
               <Link
                 to="/"
-                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${location.pathname === '/'
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  location.pathname === '/'
                     ? 'border-blue-500 text-gray-900 dark:text-white'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200'
-                  }`}
+                }`}
               >
                 Dashboard
               </Link>
-              {/* Add more navigation links as needed */}
+              {user && (
+                <Link
+                  to="/profile"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                    location.pathname === '/profile'
+                      ? 'border-blue-500 text-gray-900 dark:text-white'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200'
+                  }`}
+                >
+                  Profile
+                </Link>
+              )}
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -80,11 +92,11 @@ const Navigation = () => {
                     Log Out
                   </button>
                   <div className="ml-3 relative">
-                    <div>
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    <Link to="/profile">
+                      <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold cursor-pointer hover:opacity-90">
                         {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
                       </div>
-                    </div>
+                    </Link>
                   </div>
                 </>
               )}

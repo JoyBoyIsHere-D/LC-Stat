@@ -8,6 +8,14 @@
       "isBackground": true,
       "problemMatcher": [],
       "group": "build"
+    },
+    {
+      "label": "Start Backend Server",
+      "type": "shell",
+      "command": "cd Backend && npm start",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": "build"
     }
   ]
 }
