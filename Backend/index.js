@@ -14,6 +14,7 @@ const frontendUrl = process.env.VITE_FRONTEND_URL || 'https://leetcode-stat.netl
 app.use(cors({
   origin: [
     frontendUrl,
+    'https://leetcode-stat.netlify.app',
     'http://localhost:5173', // For local development
     'http://localhost:3000'  // For local development
   ],
