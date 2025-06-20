@@ -10,7 +10,15 @@ dotenv.config();
 const app = express();
 
 // Apply middleware
-app.use(cors());
+const frontendUrl = process.env.VITE_FRONTEND_URL || 'https://leetcode-stat.netlify.app/';
+app.use(cors({
+  origin: [
+    frontendUrl,
+    'http://localhost:5173', // For local development
+    'http://localhost:3000'  // For local development
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Use PORT from .env file or default to 3000
