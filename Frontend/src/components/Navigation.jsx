@@ -1,21 +1,12 @@
 import { Link, useLocation } from 'react-router-dom'
-import { auth } from '../config/firebase'
 import { signOut } from 'firebase/auth'
-import { useEffect, useState } from 'react'
+import { auth } from '../config/firebase'
+import { useAppState } from '../contexts/AppStateContext'
 
 const Navigation = () => {
   const location = useLocation()
+  const { authUser } = useAppState()
   const isAuthPage = location.pathname === '/login' || location.pathname === '/signup'
-  const [user, setUser] = useState(null)
-
-  // Listen for auth state changes
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(currentUser => {
-      setUser(currentUser)
-    })
-
-    return () => unsubscribe()
-  }, [])
 
   // Handle logout
   const handleLogout = async () => {
@@ -50,7 +41,7 @@ const Navigation = () => {
               >
                 Dashboard
               </Link>
-              {user && (
+              {authUser && (
                 <Link
                   to="/profile"
                   className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
@@ -66,7 +57,7 @@ const Navigation = () => {
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <div className="ml-3 relative flex space-x-4">
-              {!user ? (
+              {!authUser ? (
                 // If user is not logged in, show these links
                 <>
                   <Link
@@ -94,7 +85,7 @@ const Navigation = () => {
                   <div className="ml-3 relative">
                     <Link to="/profile">
                       <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold cursor-pointer hover:opacity-90">
-                        {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
+                        {authUser.email ? authUser.email.charAt(0).toUpperCase() : 'U'}
                       </div>
                     </Link>
                   </div>
