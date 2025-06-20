@@ -197,9 +197,18 @@ const FriendsManager = () => {
 
       <div className='overflow-y-auto max-h-56'>
         {friends.length === 0 ? (
-          <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-            <p className="text-gray-500 dark:text-gray-400">
-              You haven't added any friends yet. Add their LeetCode usernames to see their stats!
+          <div className="text-center p-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/20">
+            <div className="mb-4">
+              <span className="text-4xl">👥</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              No Friends Added Yet
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Add your friends' LeetCode usernames to see their stats and compare your progress!
+            </p>
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              Use the form above to add your first friend
             </p>
           </div>
         ) : (

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import DarkModeToggle from '../components/DarkModeToggle'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
 import { useAppState, useDashboardData } from '../contexts/AppStateContext'
 
 function HomePage() {
+	const navigate = useNavigate()
 	const { authUser, userData } = useAppState()
 	const {
 		dashboardData,
@@ -120,18 +122,7 @@ function HomePage() {
 							)}
 						</div>
 					)}
-					{reportSource === 'user-friends' && report.length === 0 && (
-						<p className="text-amber-600 dark:text-amber-400 text-xs sm:text-sm mt-2">
-							You don't have any friends added yet
-							<button
-								onClick={debugUserData}
-								className="ml-2 text-xs text-blue-500 hover:underline"
-								title="Check your user data in the database"
-							>
-								(Debug)
-							</button>
-						</p>
-					)}
+
 
 					{/* Refresh Button */}
 					{userData && (
@@ -164,23 +155,30 @@ function HomePage() {
 						</p>
 					</div>
 				) : report.length === 0 ? (
-					<div className="text-center py-8 sm:py-12">
-						<div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-							<span className="text-gray-400 dark:text-gray-500 text-2xl sm:text-3xl">📊</span>
+
+					<div className="text-center py-12 sm:py-16">
+						<div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+							<span className="text-blue-600 dark:text-blue-400 text-3xl sm:text-4xl">📊</span>
 						</div>
-						<h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-							{userData ? "No Friends Added" : "No Data Available"}
+						<h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+							{userData ? "No Friends Added Yet" : "No Data Available"}
 						</h3>
-						<p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 px-4">
-							{userData ? "You haven't added any friends yet. Add some friends to see their LeetCode stats." : "Unable to fetch report data. Please try again later."}
+						<p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 px-4 mb-6 max-w-md mx-auto">
+							{userData ? "Start building your LeetCode community! Add friends to see their progress and compare your coding journey together." : "Unable to fetch report data. Please try again later."}
 						</p>
 						{userData && (
-							<button
-								onClick={() => window.location.href = '/profile'}
-								className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm sm:text-base"
-							>
-								Add Friends
-							</button>
+							<div className="space-y-3">
+								<button
+									onClick={() => navigate('/profile')}
+									className="mt-4 px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg font-semibold transition-all duration-200 text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+								>
+									Add Your First Friend
+								</button>
+								<p className="text-xs text-gray-500 dark:text-gray-400">
+									You'll need their LeetCode username to add them
+								</p>
+							</div>
+
 						)}
 					</div>
 				) : (

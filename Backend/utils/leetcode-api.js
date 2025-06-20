@@ -119,7 +119,7 @@ export async function fetchTotalSolvedCounts(username) {
 
 // Default usernames for fallback
 export const DEFAULT_USERNAMES = [
-    "omj000080",
+    // "omj000080",
     // "av__01",
     // "harshil_kiwi",
     // "Markio125",
