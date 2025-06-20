@@ -123,6 +123,7 @@ function HomePage() {
 						</div>
 					)}
 					{reportSource === 'user-friends' && report.length === 0 && (
+
 						<div className="text-center mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
 							<p className="text-amber-700 dark:text-amber-300 text-sm mb-2">
 								You don't have any friends added yet
@@ -133,6 +134,7 @@ function HomePage() {
 							>
 								Add Friends Now
 							</button>
+
 							<button
 								onClick={debugUserData}
 								className="ml-2 text-xs text-blue-500 hover:underline"
@@ -174,9 +176,10 @@ function HomePage() {
 						</p>
 					</div>
 				) : report.length === 0 ? (
+
 					<div className="text-center py-12 sm:py-16">
 						<div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-							<span className="text-blue-600 dark:text-blue-400 text-3xl sm:text-4xl">�</span>
+							<span className="text-blue-600 dark:text-blue-400 text-3xl sm:text-4xl">📊</span>
 						</div>
 						<h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
 							{userData ? "No Friends Added Yet" : "No Data Available"}
@@ -196,6 +199,7 @@ function HomePage() {
 									You'll need their LeetCode username to add them
 								</p>
 							</div>
+
 						)}
 					</div>
 				) : (
