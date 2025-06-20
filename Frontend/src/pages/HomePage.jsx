@@ -6,15 +6,15 @@ import { useAppState, useDashboardData } from '../contexts/AppStateContext'
 
 function HomePage() {
 	const { authUser, userData } = useAppState()
-	const { 
-		dashboardData, 
-		dashboardLoading, 
-		dashboardError, 
-		fetchDashboardData, 
+	const {
+		dashboardData,
+		dashboardLoading,
+		dashboardError,
+		fetchDashboardData,
 		refreshDashboardData,
-		isCacheValid 
+		isCacheValid
 	} = useDashboardData()
-	
+
 	const [darkMode, setDarkMode] = useState(false)
 	const [reportSource, setReportSource] = useState('default')
 
@@ -133,7 +133,7 @@ function HomePage() {
 							</button>
 						</p>
 					)}
-					
+
 					{/* Refresh Button */}
 					{userData && (
 						<div className="mt-4 flex gap-2 justify-center">
@@ -170,12 +170,12 @@ function HomePage() {
 							<span className="text-gray-400 dark:text-gray-500 text-3xl">📊</span>
 						</div>
 						<h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
-							{user ? "No Friends Added" : "No Data Available"}
+							{userData ? "No Friends Added" : "No Data Available"}
 						</h3>
 						<p className="text-gray-500 dark:text-gray-400">
-							{user ? "You haven't added any friends yet. Add some friends to see their LeetCode stats." : "Unable to fetch report data. Please try again later."}
+							{userData ? "You haven't added any friends yet. Add some friends to see their LeetCode stats." : "Unable to fetch report data. Please try again later."}
 						</p>
-						{user && (
+						{userData && (
 							<button
 								onClick={() => window.location.href = '/profile'}
 								className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -197,7 +197,7 @@ function HomePage() {
 					<p className="text-gray-500 dark:text-gray-400 text-sm">
 						Last updated: {new Date().toLocaleString()}
 					</p>
-					{!user && (
+					{!authUser && (
 						<p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
 							<a href="/login" className="text-blue-500 hover:underline">Sign in</a> to see stats for yourself and your friends!
 						</p>
