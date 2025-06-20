@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import DarkModeToggle from '../components/DarkModeToggle'
 import UserCard from '../components/UserCard'
 import Loading from '../components/Loading'
+import Footer from '../components/Footer'
 import { useAppState, useDashboardData } from '../contexts/AppStateContext'
 
 function HomePage() {
@@ -68,19 +69,20 @@ function HomePage() {
 			})
 		}
 	}, [userData?.id]) // Only depend on user ID, not the entire user object
-
 	// Debug function to check user data directly
 	const debugUserData = async () => {
-		if (!userData || !userData.id) {
+		const userId = userData?.id || authUser?.uid;
+		if (!userId) {
 			console.error('No user logged in');
+			alert('No user logged in or user data not available yet');
 			return;
 		}
 
 		try {
 			const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-			console.log(`Fetching debug data from: ${backendUrl}/api/debug-user?uid=${userData.id}`);
+			console.log(`Fetching debug data from: ${backendUrl}/api/debug-user?uid=${userId}`);
 
-			const response = await fetch(`${backendUrl}/api/debug-user?uid=${userData.id}`);
+			const response = await fetch(`${backendUrl}/api/debug-user?uid=${userId}`);
 
 			if (!response.ok) {
 				const errorText = await response.text();
@@ -104,28 +106,28 @@ function HomePage() {
 
 			<div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
 				{/* Header */}
-				<div className="text-center mb-6 sm:mb-8">
-					<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-						LeetCode Daily Report
-					</h1>
+				<div className="text-center mb-6 sm:mb-8">					<h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+					LeetCode Daily Report
+				</h1>
 					<p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300">
 						{userData
 							? `Welcome ${userData.username || authUser?.email}`
-							: "LeetCode Paglu log"}
-					</p>					{reportSource === 'user-friends' && report.length > 0 && (
-						<div className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm mt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
-							<span>Showing stats for your friends</span>
-							{isCacheValid && (
-								<span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded">
-									Cached
-								</span>
-							)}
+							: authUser
+								? `Welcome ${authUser.displayName || authUser.email}`
+								: "LeetCode Paglu log"}
+					</p>
+					{/* Show a subtle loading indicator if user is authenticated but userData is still loading */}
+					{authUser && !userData && (
+						<div className="mt-2">
+							<span className="text-xs text-blue-600 dark:text-blue-400">Loading your profile...</span>
 						</div>
 					)}
-
-
-					{/* Refresh Button */}
-					{userData && (
+					{reportSource === 'user-friends' && report.length > 0 && (
+						<div className="text-blue-600 dark:text-blue-400 text-xs sm:text-sm mt-2 flex flex-col sm:flex-row items-center justify-center gap-2">
+							<span>Showing stats for your friends</span>
+						</div>
+					)}					{/* Refresh Button */}
+					{(userData || authUser) && (
 						<div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
 							<button
 								onClick={() => refreshDashboardData()}
@@ -159,14 +161,13 @@ function HomePage() {
 					<div className="text-center py-12 sm:py-16">
 						<div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
 							<span className="text-blue-600 dark:text-blue-400 text-3xl sm:text-4xl">📊</span>
-						</div>
-						<h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-							{userData ? "No Friends Added Yet" : "No Data Available"}
+						</div>						<h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
+							{(userData || authUser) ? "No Friends Added Yet" : "No Data Available"}
 						</h3>
 						<p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 px-4 mb-6 max-w-md mx-auto">
-							{userData ? "Start building your LeetCode community! Add friends to see their progress and compare your coding journey together." : "Unable to fetch report data. Please try again later."}
+							{(userData || authUser) ? "Start building your LeetCode community! Add friends to see their progress and compare your coding journey together." : "Unable to fetch report data. Please try again later."}
 						</p>
-						{userData && (
+						{(userData || authUser) && (
 							<div className="space-y-3">
 								<button
 									onClick={() => navigate('/profile')}
@@ -186,20 +187,10 @@ function HomePage() {
 						{report.map(user => (
 							<UserCard key={user.username} user={user} />
 						))}
-					</div>
-				)}
+					</div>)}
 
 				{/* Footer */}
-				<div className="text-center mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
-					<p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
-						Last updated: {new Date().toLocaleString()}
-					</p>
-					{!authUser && (
-						<p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-2 px-4">
-							<a href="/login" className="text-blue-500 hover:underline">Sign in</a> to see stats for yourself and your friends!
-						</p>
-					)}
-				</div>
+				<Footer />
 			</div>
 		</div>
 	)
