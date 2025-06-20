@@ -1,29 +1,25 @@
 import { useState, useEffect } from 'react'
-import { auth } from '../config/firebase'
-import { getUserByUid, addFriend, removeFriend, getUserFriends } from '../config/userService'
+import { addFriend, removeFriend, getUserFriends } from '../config/userService'
+import { useAppState } from '../contexts/AppStateContext'
 
 const FriendsManager = () => {
-  const [user, setUser] = useState(null)
+  const { authUser, userData } = useAppState()
   const [friends, setFriends] = useState([])
   const [newFriendUsername, setNewFriendUsername] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  // Load user data and friends when component mounts
+  // Load friends when userData is available
   useEffect(() => {
-    const loadUserData = async () => {
-      if (auth.currentUser) {
+    const loadFriends = async () => {
+      if (userData?.id) {
         try {
-          const userData = await getUserByUid(auth.currentUser.uid)
-          setUser(userData)
-
-          // Load friends
-          const friendsData = await getUserFriends(auth.currentUser.uid)
+          const friendsData = await getUserFriends(authUser.uid)
           setFriends(friendsData)
         } catch (err) {
-          console.error('Error loading user data:', err)
-          setError('Failed to load user data')
+          console.error('Error loading friends:', err)
+          setError('Failed to load friends')
         } finally {
           setLoading(false)
         }
@@ -32,33 +28,8 @@ const FriendsManager = () => {
       }
     }
 
-    loadUserData()
-
-    // Listen for auth state changes
-    const unsubscribe = auth.onAuthStateChanged(async currentUser => {
-      if (currentUser) {
-        try {
-          const userData = await getUserByUid(currentUser.uid)
-          setUser(userData)
-
-          // Load friends
-          const friendsData = await getUserFriends(currentUser.uid)
-          setFriends(friendsData)
-        } catch (err) {
-          console.error('Error loading user data:', err)
-          setError('Failed to load user data')
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        setUser(null)
-        setFriends([])
-        setLoading(false)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [])
+    loadFriends()
+  }, [userData?.id, authUser?.uid])
 
   // Handle adding a new friend
   const handleAddFriend = async e => {
@@ -71,24 +42,19 @@ const FriendsManager = () => {
       return
     }
 
-    if (!auth.currentUser) {
+    if (!authUser) {
       setError('You must be logged in to add friends')
       return
     }
 
     try {
       setLoading(true)
-      await addFriend(auth.currentUser.uid, newFriendUsername.trim())
+      await addFriend(authUser.uid, newFriendUsername.trim())
 
       // Refresh friends list
-      const friendsData = await getUserFriends(auth.currentUser.uid)
+      const friendsData = await getUserFriends(authUser.uid)
       console.log('Retrieved friends data:', friendsData)
       setFriends(friendsData)
-
-      // Also refresh user data to get updated friends array
-      const userData = await getUserByUid(auth.currentUser.uid)
-      console.log('Updated user data:', userData)
-      setUser(userData)
 
       setNewFriendUsername('')
       setSuccess(`Added ${newFriendUsername.trim()} to your friends`)
@@ -102,24 +68,19 @@ const FriendsManager = () => {
 
   // Handle removing a friend
   const handleRemoveFriend = async friendLeetcodeUsername => {
-    if (!auth.currentUser) {
+    if (!authUser) {
       setError('You must be logged in to remove friends')
       return
     }
 
     try {
       setLoading(true)
-      await removeFriend(auth.currentUser.uid, friendLeetcodeUsername)
+      await removeFriend(authUser.uid, friendLeetcodeUsername)
 
       // Refresh friends list
-      const friendsData = await getUserFriends(auth.currentUser.uid)
+      const friendsData = await getUserFriends(authUser.uid)
       console.log('Retrieved friends data after removal:', friendsData)
       setFriends(friendsData)
-
-      // Also refresh user data to get updated friends array
-      const userData = await getUserByUid(auth.currentUser.uid)
-      console.log('Updated user data after removal:', userData)
-      setUser(userData)
 
       setSuccess(`Removed ${friendLeetcodeUsername} from your friends`)
     } catch (err) {
@@ -131,17 +92,13 @@ const FriendsManager = () => {
   }
 
   const refreshFriendsList = async () => {
-    if (!auth.currentUser) return;
+    if (!authUser) return;
 
     try {
       setLoading(true);
 
-      // Refresh user data
-      const userData = await getUserByUid(auth.currentUser.uid);
-      setUser(userData);
-
       // Refresh friends list
-      const friendsData = await getUserFriends(auth.currentUser.uid);
+      const friendsData = await getUserFriends(authUser.uid);
       console.log('Manually refreshed friends data:', friendsData);
       setFriends(friendsData);
 
@@ -169,7 +126,7 @@ const FriendsManager = () => {
     )
   }
 
-  if (!user) {
+  if (!userData) {
     return (
       <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
         <p className="text-gray-700 dark:text-gray-300">Please log in to manage your friends.</p>
@@ -237,12 +194,21 @@ const FriendsManager = () => {
           </button>
         </div>
       </form>
-      
+
       <div className='overflow-y-auto max-h-56'>
         {friends.length === 0 ? (
-          <div className="text-center p-6 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-            <p className="text-gray-500 dark:text-gray-400">
-              You haven't added any friends yet. Add their LeetCode usernames to see their stats!
+          <div className="text-center p-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700/20">
+            <div className="mb-4">
+              <span className="text-4xl">👥</span>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              No Friends Added Yet
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              Add your friends' LeetCode usernames to see their stats and compare your progress!
+            </p>
+            <p className="text-sm text-blue-600 dark:text-blue-400">
+              Use the form above to add your first friend
             </p>
           </div>
         ) : (

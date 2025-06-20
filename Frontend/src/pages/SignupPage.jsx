@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { auth, googleProvider } from '../config/firebase'
 import {
 	createUserWithEmailAndPassword,
@@ -22,6 +22,10 @@ const SignupPage = () => {
 	const [error, setError] = useState('')
 
 	const navigate = useNavigate()
+	const location = useLocation()
+
+	// Get the page the user was trying to visit, default to home
+	const from = location.state?.from?.pathname || '/'
 
 	const handleChange = e => {
 		const { name, value } = e.target
@@ -75,7 +79,8 @@ const SignupPage = () => {
 				friends: [], // For a new account, this will create an empty friends array
 			})
 
-			navigate('/')
+			// Redirect to the page they were trying to visit, or home
+			navigate(from, { replace: true })
 		} catch (err) {
 			// Handle specific error codes
 			if (err.code === 'auth/email-already-in-use') {
@@ -110,9 +115,9 @@ const SignupPage = () => {
 			const existingUserData = await getUserByUid(user.uid)
 
 			if (existingUserData) {
-				// User already exists, preserve their existing data and redirect to home
+				// User already exists, preserve their existing data and redirect to intended page
 				console.log('User already exists, signing in:', existingUserData)
-				navigate('/')
+				navigate(from, { replace: true })
 				return
 			}
 
@@ -125,7 +130,8 @@ const SignupPage = () => {
 				friends: [], // For a new account, this will create an empty friends array
 			})
 
-			navigate('/')
+			// Redirect to the page they were trying to visit, or home
+			navigate(from, { replace: true })
 		} catch (err) {
 			setError('Google sign-in failed. Please try again.')
 			console.error(err)
